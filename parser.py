@@ -4,6 +4,7 @@ import PyPDF2
 import docx
 import pandas as pd
 
+# Load SpaCy model once
 nlp = spacy.load("en_core_web_sm")
 
 # 1. Extract text from PDF, DOCX, or TXT files
@@ -12,7 +13,9 @@ def extract_text_from_pdf(pdf_path):
         reader = PyPDF2.PdfReader(file)
         text = ""
         for page in range(len(reader.pages)):
-            text += reader.pages[page].extract_text()
+            page_text = reader.pages[page].extract_text()
+            if page_text:
+                text += page_text
     return text
 
 def extract_text_from_docx(docx_path):
@@ -25,18 +28,16 @@ def extract_text(file_path):
     elif file_path.endswith('.docx'):
         return extract_text_from_docx(file_path)
     elif file_path.endswith('.txt'):
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             return file.read()
     else:
         raise ValueError("Unsupported file format")
 
 # 2. Regular Expressions for Name, Email, Phone
 def extract_contact_info(text):
-    # Email pattern
     email_pattern = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
     email = re.findall(email_pattern, text)
 
-    # Phone pattern (US/International)
     phone_pattern = re.compile(r'\+?\d[\d -]{8,12}\d')
     phone = re.findall(phone_pattern, text)
 
@@ -44,7 +45,6 @@ def extract_contact_info(text):
 
 # 3. Extract Skills
 def extract_skills(text, skillset):
-    # Match the skills in the text with known skillset
     skills_found = []
     for skill in skillset:
         if re.search(fr"\b{skill}\b", text, re.IGNORECASE):
@@ -54,43 +54,38 @@ def extract_skills(text, skillset):
 # 4. Extract Work Experience using Named Entity Recognition (NER)
 def extract_experience(text):
     doc = nlp(text)
-    experiences = []
-    for ent in doc.ents:
-        if ent.label_ == "ORG":
-            experiences.append(ent.text)
-    return experiences
+    return [ent.text for ent in doc.ents if ent.label_ == "ORG"]
 
 # 5. Extract Education Information
 def extract_education(text):
     education_keywords = ["Bachelor", "Master", "B.Sc", "M.Sc", "B.Tech", "M.Tech", "PhD"]
-    education_info = []
-    for keyword in education_keywords:
-        if re.search(keyword, text, re.IGNORECASE):
-            education_info.append(keyword)
-    return education_info
+    return [keyword for keyword in education_keywords if re.search(keyword, text, re.IGNORECASE)]
 
 # 6. Parse Resume and structure output
 def parse_resume(file_path):
     text = extract_text(file_path)
-
-    # Define the skill set to look for
     skillset = ["Python", "Machine Learning", "Data Science", "Java", "SQL", "NLP", "Deep Learning"]
 
-    # Extract relevant fields
     contact_info = extract_contact_info(text)
     skills = extract_skills(text, skillset)
     experience = extract_experience(text)
     education = extract_education(text)
 
-    # Structuring output
     resume_data = {
-        "Name": None,  # Extracting name can be done by advanced NER, not shown in this example
+        "Name": None,
         "Email": contact_info['email'],
         "Phone": contact_info['phone'],
         "Skills": skills,
         "Experience": experience,
         "Education": education
     }
-
-    # Convert to DataFrame for better output
     return pd.DataFrame([resume_data])
+
+# -------- MAIN PROGRAM --------
+file_path = input("Enter the path to your file (.pdf, .docx, .txt): ").strip()
+
+print("\n--- File Content ---")
+print(extract_text(file_path))  # Show extracted text
+
+print("\n--- Parsed Resume Data ---")
+print(parse_resume(file_path))  # Show structured data
