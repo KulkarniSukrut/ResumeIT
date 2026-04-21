@@ -28,6 +28,7 @@ export type ParsedResume = {
 };
 
 export type UploadHistoryItem = {
+  id: string;
   fileName: string;
   fileSize: number;
   uploadedAt: string;

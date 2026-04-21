@@ -55,7 +55,7 @@ export default function Home() {
               ) : (
                 <ul className="space-y-2 text-sm text-zinc-300">
                   {recent.map((item) => (
-                    <li key={`${item.fileName}-${item.uploadedAt}`} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                    <li key={item.id} className="rounded-xl border border-white/10 bg-white/5 p-3">
                       <p className="font-medium text-zinc-100">{item.fileName}</p>
                       <p>{(item.fileSize / 1024).toFixed(1)} KB</p>
                     </li>

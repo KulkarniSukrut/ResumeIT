@@ -51,9 +51,10 @@ export function ResultCard({ data }: { data: ParsedResume }) {
         <ItemCard title="Education" icon={<GraduationCap className="h-4 w-4" />}>
           <div className="space-y-2">
             {education.length ? (
-              education.map((item, idx) => (
-                <p key={`edu-${idx}`}>{typeof item === "string" ? item : [item.degree, item.institution, item.year].filter(Boolean).join(" • ")}</p>
-              ))
+              education.map((item) => {
+                const label = typeof item === "string" ? item : [item.degree, item.institution, item.year].filter(Boolean).join(" • ");
+                return <p key={`edu-${label}`}>{label}</p>;
+              })
             ) : (
               <p>No education details found.</p>
             )}
@@ -63,9 +64,10 @@ export function ResultCard({ data }: { data: ParsedResume }) {
         <ItemCard title="Experience" icon={<BriefcaseBusiness className="h-4 w-4" />}>
           <div className="space-y-2">
             {experience.length ? (
-              experience.map((item, idx) => (
-                <p key={`exp-${idx}`}>{typeof item === "string" ? item : [item.role, item.company, item.duration].filter(Boolean).join(" • ")}</p>
-              ))
+              experience.map((item) => {
+                const label = typeof item === "string" ? item : [item.role, item.company, item.duration].filter(Boolean).join(" • ");
+                return <p key={`exp-${label}`}>{label}</p>;
+              })
             ) : (
               <p>No experience details found.</p>
             )}

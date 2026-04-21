@@ -59,7 +59,12 @@ export function Upload({ onParsed, onUpload }: UploadProps) {
       setProgress(100);
       setDone(true);
       onParsed(parsed);
-      onUpload({ fileName: file.name, fileSize: file.size, uploadedAt: new Date().toISOString() });
+      onUpload({
+        id: crypto.randomUUID(),
+        fileName: file.name,
+        fileSize: file.size,
+        uploadedAt: new Date().toISOString(),
+      });
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unexpected error. Please retry.");
     } finally {
