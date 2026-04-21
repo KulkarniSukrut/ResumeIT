@@ -72,6 +72,35 @@ const JOB_TITLE_KEYWORDS = [
   "Specialist", "Executive", "Officer", "Head", "VP", "President",
 ];
 
+/**
+ * Matches common duration formats in work experience entries:
+ *  - "Jan 2020 – Dec 2022" / "Jan, 2020 - Dec, 2022"
+ *  - "2019 – 2021"
+ *  - "2020 – Present"
+ */
+const DURATION_PATTERN =
+  /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,]+\d{4}\s*[-–]\s*(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,]+\d{4}|\b(?:19|20)\d{2}\s*[-–]\s*(?:19|20)\d{2}|\b(?:19|20)\d{2}\s*[-–]\s*[Pp]resent\b/;
+
+/**
+ * RFC-5321-inspired email pattern.
+ * Local part: starts and ends with alphanumeric; allows dots, underscores, percent, plus, hyphen in between.
+ * Domain: labels separated by dots, TLD at least 2 characters.
+ */
+const EMAIL_PATTERN =
+  /\b[A-Za-z0-9](?:[A-Za-z0-9._%+\-]{0,62}[A-Za-z0-9])?@[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?(?:\.[A-Za-z]{2,})+\b/;
+
+/**
+ * Matches common phone number formats, requiring an area code + at least 7 digits.
+ * Examples: "+1 (555) 123-4567", "555.123.4567", "+44 7911 123456"
+ */
+const PHONE_PATTERN = /(?:\+?\d{1,3}[\s\-.]?)?\(?\d{3}\)?[\s\-.]?\d{3}[\s\-.]?\d{4,6}\b/;
+
+/** Section headings that bound the experience block from below. */
+const NEXT_SECTION_KEYWORDS = [
+  "education", "skills", "projects", "certifications", "awards",
+  "references", "interests", "hobbies", "languages",
+];
+
 // ---------------------------------------------------------------------------
 // Text extraction
 // ---------------------------------------------------------------------------
@@ -97,8 +126,8 @@ async function extractTextFromDocx(buffer: Buffer): Promise<string> {
 // ---------------------------------------------------------------------------
 
 function extractContactInfo(text: string): ContactInfo {
-  const emailMatch = text.match(/\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b/);
-  const phoneMatch = text.match(/\+?\d[\d\s\-(). ]{7,14}\d/);
+  const emailMatch = text.match(EMAIL_PATTERN);
+  const phoneMatch = text.match(PHONE_PATTERN);
   const linkedinMatch = text.match(/(?:https?:\/\/)?(?:www\.)?linkedin\.com\/in\/[\w\-]+/i);
 
   // Location: look for "City, ST" or "City, State" patterns, or explicit label
@@ -214,12 +243,9 @@ function extractExperience(text: string): ExperienceItem[] {
   if (expSectionStart < 0) return results;
 
   // Find next major section to bound experience block
+  const nextSectionPattern = new RegExp(`^(${NEXT_SECTION_KEYWORDS.join("|")})`, "i");
   const nextSectionStart = lines.findIndex(
-    (l, idx) =>
-      idx > expSectionStart &&
-      /^(education|skills|projects|certifications|awards|references|interests|hobbies|languages)/i.test(
-        l.trim()
-      )
+    (l, idx) => idx > expSectionStart && nextSectionPattern.test(l.trim())
   );
 
   const expLines =
@@ -227,8 +253,6 @@ function extractExperience(text: string): ExperienceItem[] {
       ? lines.slice(expSectionStart + 1, nextSectionStart)
       : lines.slice(expSectionStart + 1, expSectionStart + 60);
 
-  const durationPattern =
-    /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,]+\d{4}\s*[-–]\s*(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,]+\d{4}|\b(19|20)\d{2}\s*[-–]\s*(19|20)\d{2}|\b(19|20)\d{2}\s*[-–]\s*present\b/i;
   const jobTitlePattern = new RegExp(JOB_TITLE_KEYWORDS.map(escapeRegex).join("|"), "i");
 
   let currentItem: ExperienceItem | null = null;
@@ -243,7 +267,7 @@ function extractExperience(text: string): ExperienceItem[] {
       continue;
     }
 
-    const durationMatch = line.match(durationPattern);
+    const durationMatch = line.match(DURATION_PATTERN);
     if (durationMatch) {
       if (!currentItem) currentItem = {};
       currentItem.duration = durationMatch[0];
