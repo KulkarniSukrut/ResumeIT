@@ -3,8 +3,12 @@ import type { ParsedResume } from "@/lib/types";
 export async function parseResume(file: File): Promise<ParsedResume> {
   const formData = new FormData();
   formData.append("file", file);
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+  const endpoint = configuredBaseUrl
+    ? `${configuredBaseUrl.replace(/\/$/, "")}/api/parse`
+    : "/api/parse";
 
-  const response = await fetch("/api/parse", {
+  const response = await fetch(endpoint, {
     method: "POST",
     body: formData,
   });

@@ -1,23 +1,48 @@
-# ResumeIT - Resume Parser with NLP
+# ResumeIT
 
-This project is a **Resume Parser** that extracts relevant information from resumes such as contact information, skills, work experience, and education using **Natural Language Processing (NLP)**. The tool supports resume files in PDF, DOCX, and TXT formats and outputs the parsed data in structured JSON or CSV format, making it easier for users to identify the best resumes for AI/ML training or job applications.
+ResumeIT is a Next.js app that uploads PDF/DOCX resumes and parses them into structured JSON (name, contact info, skills, education, and experience).
 
-## Features
+## Setup
 
-- **Multi-format Support**: Parse resumes in PDF, DOCX, and TXT formats.
-- **Contact Information Extraction**: Extracts email addresses and phone numbers using regular expressions.
-- **Skill Extraction**: Matches user-defined skill sets with the resume content.
-- **Experience Extraction**: Extracts work experience using Named Entity Recognition (NER) from spaCy.
-- **Education Extraction**: Identifies educational qualifications like Bachelor's, Master's, and Ph.D. degrees.
-- **Structured Output**: Parsed data is saved in JSON format, making it easy to integrate with other applications.
-- **Customizable Skills**: Easily modify the skill set to search for in the resumes.
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Create a local env file from the context template:
+   ```bash
+   copy .env.example .env.local
+   ```
+3. Start the app:
+   ```bash
+   npm run dev
+   ```
 
-## Project Structure
+## Environment / Context File
 
-```plaintext
-resume_parser/
-│
-├── main.py         # Entry point to the resume parser
-├── parser.py       # Parsing logic for different file types and extraction
-├── resume_data/    # Folder to store resumes in PDF, DOCX, or TXT formats
-└── output/         # Folder to store parsed results in CSV or JSON format
+Use `.env.example` as the project context/config template when moving this project to another IDE or machine.
+
+- `NEXT_PUBLIC_API_BASE_URL`: Optional API base URL. Keep empty to use the same host.
+- `RESUME_MAX_FILE_SIZE_MB`: Max upload size accepted by the parser endpoint.
+
+## Parser Endpoint
+
+- Route: `POST /api/parse`
+- Form field: `file`
+- Supported files: `.pdf`, `.docx`
+
+Returns JSON in this shape:
+
+```json
+{
+  "name": "Candidate Name",
+  "contactInfo": {
+    "email": "person@example.com",
+    "phone": "+1 555 123 4567",
+    "linkedin": "linkedin.com/in/person",
+    "location": "City, State"
+  },
+  "skills": ["Python", "SQL"],
+  "education": ["Bachelor of Technology, XYZ University"],
+  "experience": ["Software Engineer - ABC Corp (2021 - Present)"]
+}
+```
